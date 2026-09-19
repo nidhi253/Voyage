@@ -1,0 +1,14 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import "tailwindcss";
+
+.display {
+  font-family: 'Fraunces', serif;
+}
+
+.body-font {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+  margin: 0;
+}
