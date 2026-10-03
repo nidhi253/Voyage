@@ -9,6 +9,9 @@ export const colors = {
   amber: '#E2A63B',
   amberWash: '#FBF1DE',
   deepSky: '#2B4C6F',
+  deepSkyWash: '#2B4C6F15',
+  teal: '#12998A',
+  disabled: '#8D9299',
   red: '#C0392B',
 };
 
