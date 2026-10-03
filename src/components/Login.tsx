@@ -4,17 +4,39 @@ import { colors as c } from '../theme';
 
 type Mode = 'sign-in' | 'sign-up';
 
+// Supabase gives the same error for a wrong password and an unknown email (on purpose, so
+// nobody can probe which emails have accounts), so the message has to cover both cases.
+function friendlyError(code: string | undefined, message: string): string {
+  switch (code) {
+    case 'invalid_credentials':
+      return 'That email and password don’t match an account. Check them, or sign up if you’re new.';
+    case 'email_not_confirmed':
+      return 'Please confirm your email first — check your inbox for the link.';
+    case 'user_already_exists':
+      return 'An account with this email already exists. Try signing in instead.';
+    case 'weak_password':
+      return 'That password is too weak. Use at least 6 characters.';
+    case 'over_request_rate_limit':
+    case 'over_email_send_rate_limit':
+      return 'Too many attempts. Please wait a minute and try again.';
+    default:
+      return message;
+  }
+}
+
 export default function Login() {
   const [mode, setMode] = useState<Mode>('sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setErrorCode(undefined);
     setLoading(true);
 
     const { error } =
@@ -25,7 +47,8 @@ export default function Login() {
     setLoading(false);
 
     if (error) {
-      setError(error.message);
+      setError(friendlyError(error.code, error.message));
+      setErrorCode(error.code);
       return;
     }
 
@@ -83,6 +106,21 @@ export default function Login() {
             {error && (
               <p className="body-font text-xs" style={{ color: c.red }}>
                 {error}
+                {mode === 'sign-in' && errorCode === 'invalid_credentials' && (
+                  <>
+                    {' '}
+                    <button
+                      type="button"
+                      className="underline font-semibold"
+                      onClick={() => {
+                        setMode('sign-up');
+                        setError(null);
+                      }}
+                    >
+                      Create an account
+                    </button>
+                  </>
+                )}
               </p>
             )}
 

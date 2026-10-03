@@ -45,6 +45,8 @@ export interface SavedOutfit {
   id: string;
   user_id: string;
   name: string;
+  /** Labels this outfit is mapped to (e.g. Beach, Dinner). One outfit can have several. */
+  occasions: string[];
 }
 
 export interface OutfitAssignment {
@@ -60,6 +62,74 @@ export interface Profile {
   age: number | null;
   tags: string[];
   dark_mode: boolean;
+  /** The user's own list of piece types; null/missing means use the defaults. */
+  categories?: string[] | null;
 }
 
 export const PERSONA_TAGS = ['Adventurous', 'Chill', 'Pilgrimage', 'Family'];
+
+/** Starting set of garment types. Each user can add, rename and remove types (stored on their profile). */
+export const DEFAULT_CATEGORIES = ['Tops', 'Trousers', 'Skirts', 'Dresses', 'Outerwear', 'Shoes', 'Accessories', 'Other'];
+export const UNCATEGORIZED = 'Uncategorized';
+
+export interface WardrobeItem {
+  id: string;
+  user_id: string;
+  /** Storage path inside the private bucket ({user_id}/{item_id}.jpg), not a public URL. */
+  image_url: string;
+  category: string;
+  created_at: string;
+  /** Short-lived signed URL for display, filled in by the data layer. */
+  signedUrl: string;
+}
+
+export interface OutfitWithItems {
+  id: string;
+  name: string;
+  itemIds: string[];
+  occasions: string[];
+}
+
+export interface OutfitSuggestion {
+  name: string;
+  itemIds: string[];
+}
+
+export interface Destination {
+  id: string;
+  name: string;
+  country: string;
+  region: string | null;
+  image_url: string | null;
+  short_description: string | null;
+  full_description: string | null;
+  best_time_to_visit: string | null;
+  tags: string[];
+  highlights: string[];
+}
+
+export interface EventItem {
+  id: string;
+  name: string;
+  location: string;
+  event_date: string;
+  image_url: string | null;
+  tags: string[];
+}
+
+export type NudgeStatus = 'pending' | 'accepted' | 'dismissed';
+
+export interface Nudge {
+  id: string;
+  trip_id: string;
+  itinerary_entry_id: string;
+  reason: string;
+  suggested_title: string | null;
+  suggested_outfit_note: string | null;
+  status: NudgeStatus;
+  created_at: string;
+  trips?: { destination: string } | null;
+}
+
+export const MAX_OCCASIONS = 8;
+export const OCCASION_SUGGESTIONS = ['Beach', 'Dinner', 'Hiking', 'Temple', 'Casual', 'Evening', 'Work'];

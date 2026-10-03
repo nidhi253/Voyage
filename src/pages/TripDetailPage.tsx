@@ -18,8 +18,9 @@ import {
   updateEntry,
 } from '../data/trips';
 import { dayCount, formatRange, titleCase, todayISO } from '../lib/dates';
+import { useOutfitThumbs } from '../lib/useOutfitThumbs';
 import type { EntryInput, ItineraryEntry, OutfitAssignment, SavedOutfit, Trip } from '../types';
-import { Badge, Button, ConfirmModal, ErrorText, Spinner } from '../components/ui';
+import { Badge, Button, Chip, ConfirmModal, ErrorText, Spinner } from '../components/ui';
 
 type Pending =
   | { kind: 'delete'; entry: ItineraryEntry }
@@ -48,6 +49,7 @@ export default function TripDetailPage() {
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [readyErrors, setReadyErrors] = useState<string[]>([]);
+  const thumbs = useOutfitThumbs();
 
   const load = useCallback(async () => {
     try {
@@ -257,7 +259,11 @@ export default function TripDetailPage() {
           Outfit for Day {day}
         </h3>
         <div className="rounded-2xl p-5 text-center" style={{ background: c.surface, border: `1px solid ${c.hairline}` }}>
-          <Shirt size={22} color={c.slate} className="mx-auto mb-2" />
+          {dayOutfit && (thumbs.get(dayOutfit.id)?.length ?? 0) > 0 ? (
+            <MiniThumbs urls={thumbs.get(dayOutfit.id) ?? []} size={44} className="justify-center mb-2" />
+          ) : (
+            <Shirt size={22} color={c.slate} className="mx-auto mb-2" />
+          )}
           <p className="body-font text-sm" style={{ color: c.slate }}>
             {dayOutfit ? dayOutfit.name : 'No outfit assigned for this day.'}
           </p>
@@ -334,6 +340,7 @@ export default function TripDetailPage() {
       <OutfitDialog
         open={outfitOpen}
         outfits={outfits}
+        thumbs={thumbs}
         selectedId={dayAssignment?.saved_outfit_id}
         onClose={() => setOutfitOpen(false)}
         onPick={(outfitId) => {
@@ -428,9 +435,20 @@ function EntryDialog({
   );
 }
 
+function MiniThumbs({ urls, size, className = '' }: { urls: string[]; size: number; className?: string }) {
+  return (
+    <div className={`flex gap-1.5 ${className}`}>
+      {urls.map((u, i) => (
+        <img key={i} src={u} alt="" className="rounded-lg object-cover shrink-0" style={{ width: size, height: size, border: `1px solid ${c.hairline}` }} />
+      ))}
+    </div>
+  );
+}
+
 function OutfitDialog({
   open,
   outfits,
+  thumbs,
   selectedId,
   onClose,
   onPick,
@@ -438,11 +456,16 @@ function OutfitDialog({
 }: {
   open: boolean;
   outfits: SavedOutfit[];
+  thumbs: Map<string, string[]>;
   selectedId?: string;
   onClose: () => void;
   onPick: (id: string) => void;
   onGoToWardrobe: () => void;
 }) {
+  const [filter, setFilter] = useState('All');
+  const occasions = useMemo(() => Array.from(new Set(outfits.flatMap((o) => o.occasions))).sort(), [outfits]);
+  const shown = outfits.filter((o) => filter === 'All' || o.occasions.includes(filter));
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: '20px', m: 2 } }}>
       <div className="p-5">
@@ -455,19 +478,41 @@ function OutfitDialog({
             <Button onClick={onGoToWardrobe}>Go to Wardrobe</Button>
           </>
         ) : (
+          <>
+          {occasions.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {['All', ...occasions].map((occ) => (
+                <Chip key={occ} label={occ} selected={filter === occ} onClick={() => setFilter(occ)} />
+              ))}
+            </div>
+          )}
           <div className="flex flex-col gap-2">
-            {outfits.map((o) => (
+            {shown.length === 0 && (
+              <p className="body-font text-sm" style={{ color: c.slate }}>
+                No outfits for “{filter}” yet.
+              </p>
+            )}
+            {shown.map((o) => (
               <button
                 key={o.id}
                 onClick={() => onPick(o.id)}
-                className="body-font text-sm text-left px-4 py-3.5 rounded-xl flex justify-between items-center"
+                className="body-font text-sm text-left px-4 py-3 rounded-xl flex items-center gap-3"
                 style={{ background: c.surface, border: `1px solid ${o.id === selectedId ? c.deepSky : c.hairline}`, color: c.ink }}
               >
-                {o.name}
+                <MiniThumbs urls={thumbs.get(o.id) ?? []} size={40} />
+                <span className="flex-1 min-w-0">
+                  {o.name}
+                  {o.occasions.length > 0 && (
+                    <span className="block text-xs" style={{ color: c.slate }}>
+                      {o.occasions.join(' · ')}
+                    </span>
+                  )}
+                </span>
                 {o.id === selectedId && <Check size={16} color={c.deepSky} />}
               </button>
             ))}
           </div>
+          </>
         )}
       </div>
     </Dialog>

@@ -109,7 +109,7 @@ export async function listSavedOutfits(): Promise<SavedOutfit[]> {
   if (PREVIEW) return (await loadMock()).listSavedOutfits();
   const { data, error } = await supabase.from('saved_outfits').select('*').order('created_at');
   if (error) throw error;
-  return data as SavedOutfit[];
+  return (data as SavedOutfit[]).map((o) => ({ ...o, occasions: o.occasions ?? [] }));
 }
 
 /**
@@ -126,4 +126,14 @@ export async function generateItinerary(tripId: string, regenerate: boolean): Pr
       'Itinerary generation isn’t switched on yet — add entries by hand for now.',
     );
   }
+}
+
+/** "Add to trip" from a destination page: makes it the trip's second city. */
+export async function setSecondCity(tripId: string, destination: string, startDay: number): Promise<void> {
+  if (PREVIEW) return (await loadMock()).setSecondCity(tripId, destination, startDay);
+  const { error } = await supabase
+    .from('trips')
+    .update({ second_destination: destination, second_city_start_day: startDay })
+    .eq('id', tripId);
+  if (error) throw error;
 }

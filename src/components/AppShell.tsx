@@ -11,7 +11,7 @@ const tabs = [
 
 // Sub-pages (new trip, trip detail, destination detail) take over the screen on phones.
 function isSubPage(path: string) {
-  return /^\/trips\/.+/.test(path) || /^\/destinations\/.+/.test(path);
+  return /^\/trips\/.+/.test(path) || /^\/destinations\/.+/.test(path) || path === '/wardrobe/add' || path === '/notifications';
 }
 
 export default function AppShell() {

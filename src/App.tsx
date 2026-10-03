@@ -10,11 +10,20 @@ import PlaceholderPage from './pages/PlaceholderPage';
 import TripsPage from './pages/TripsPage';
 import NewTripPage from './pages/NewTripPage';
 import TripDetailPage from './pages/TripDetailPage';
-import { Button } from './components/ui';
+import WardrobePage from './pages/WardrobePage';
+import AddPiecesPage from './pages/AddPiecesPage';
+import HomePage from './pages/HomePage';
+import DestinationPage from './pages/DestinationPage';
+import NotificationsPage from './pages/NotificationsPage';
+import ProfilePage from './pages/ProfilePage';
+import { CategoriesProvider } from './lib/categories';
+import { getMyProfile } from './data/profile';
+import { useThemeMode } from './lib/themeMode';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { setMode } = useThemeMode();
 
   useEffect(() => {
     if (PREVIEW) {
@@ -32,6 +41,15 @@ export default function App() {
 
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  // Once signed in, the saved dark-mode choice on the profile wins over the local one.
+  const signedIn = !!session || PREVIEW;
+  useEffect(() => {
+    if (!signedIn) return;
+    getMyProfile()
+      .then((p) => p && setMode(p.dark_mode ? 'dark' : 'light'))
+      .catch(() => {});
+  }, [signedIn, setMode]);
 
   if (loading) {
     return (
@@ -58,23 +76,17 @@ export default function App() {
     )}
     <Routes>
       <Route element={<AppShell />}>
-        <Route index element={<PlaceholderPage title="Hey there" />} />
+        <Route index element={<HomePage />} />
+        <Route path="destinations/:id" element={<DestinationPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
         <Route path="trips" element={<TripsPage />} />
         <Route path="trips/new" element={<NewTripPage />} />
         <Route path="trips/:id" element={<TripDetailPage />} />
-        <Route path="wardrobe" element={<PlaceholderPage title="Wardrobe" />} />
-        <Route
-          path="profile"
-          element={
-            <PlaceholderPage title="Profile">
-              <div className="max-w-xs">
-                <Button variant="outline" onClick={() => supabase.auth.signOut()} style={{ color: c.red }}>
-                  Log out
-                </Button>
-              </div>
-            </PlaceholderPage>
-          }
-        />
+        <Route path="wardrobe" element={<CategoriesProvider />}>
+          <Route index element={<WardrobePage />} />
+          <Route path="add" element={<AddPiecesPage />} />
+        </Route>
+        <Route path="profile" element={<ProfilePage />} />
         <Route path="*" element={<PlaceholderPage title="Not found" />} />
       </Route>
     </Routes>

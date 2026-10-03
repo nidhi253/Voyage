@@ -32,3 +32,16 @@ export function titleCase(s: string): string {
 export function isValidISODate(s: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(parseDate(s).getTime());
 }
+
+export function addDays(iso: string, n: number): string {
+  const d = parseDate(iso);
+  d.setDate(d.getDate() + n);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+export function formatDay(iso: string): string {
+  const d = parseDate(iso);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+}

@@ -1,18 +1,22 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { muiTheme } from './theme';
+import { paletteCss } from './theme';
+import { ThemeModeProvider } from './lib/themeMode';
 import './index.css';
 import App from './App';
 
+// Colour variables for light and dark mode, defined once from theme.ts.
+const style = document.createElement('style');
+style.textContent = paletteCss();
+document.head.appendChild(style);
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider theme={muiTheme}>
-      <CssBaseline />
+    <ThemeModeProvider>
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    </ThemeProvider>
+    </ThemeModeProvider>
   </StrictMode>
 );
