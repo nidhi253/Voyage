@@ -96,6 +96,20 @@ export default function DestinationPage() {
         </Link>
       </div>
 
+      {dest.image_credit && (
+        <p className="body-font text-[11px] px-5 mt-6" style={{ color: c.slate }}>
+          Photo: {dest.image_credit}
+          {dest.image_source_url && (
+            <>
+              {' '}·{' '}
+              <a href={dest.image_source_url} target="_blank" rel="noreferrer" className="underline">
+                Wikimedia Commons
+              </a>
+            </>
+          )}
+        </p>
+      )}
+
       <AddToTripSheet open={sheetOpen} destination={dest} onClose={() => setSheetOpen(false)} />
     </div>
   );

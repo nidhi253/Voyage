@@ -243,7 +243,37 @@ export default function HomePage() {
           )}
         </>
       )}
+
+      {loaded && (picked.length > 0 || events.length > 0) && <PhotoCredits destinations={picked} events={events} />}
     </div>
+  );
+}
+
+function PhotoCredits({ destinations, events }: { destinations: Destination[]; events: EventItem[] }) {
+  const rows = [
+    ...destinations.map((d) => ({ name: d.name, credit: d.image_credit, url: d.image_source_url })),
+    ...events.map((e) => ({ name: e.name, credit: e.image_credit, url: e.image_source_url })),
+  ].filter((r) => r.credit);
+  if (rows.length === 0) return null;
+  return (
+    <details className="mt-8 body-font text-xs" style={{ color: c.slate }}>
+      <summary className="cursor-pointer">Photo credits</summary>
+      <ul className="mt-2 flex flex-col gap-1">
+        {rows.map((r) => (
+          <li key={r.name}>
+            {r.name}: {r.credit}
+            {r.url && (
+              <>
+                {' '}·{' '}
+                <a href={r.url} target="_blank" rel="noreferrer" className="underline">
+                  source
+                </a>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 

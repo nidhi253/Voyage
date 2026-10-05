@@ -1,4 +1,5 @@
 // In-memory fake database for preview mode. Resets on page reload.
+import indiaContent from '../../supabase/india-content.json';
 import { addDays, todayISO } from '../lib/dates';
 import type {
   Destination,
@@ -34,8 +35,8 @@ const trip = (p: Partial<Trip> & Pick<Trip, 'destination' | 'start_date' | 'end_
 });
 
 const bali = trip({
-  destination: 'Bali',
-  second_destination: 'lombok',
+  destination: 'Jaipur',
+  second_destination: 'udaipur',
   second_city_start_day: 3,
   start_date: '2026-11-23',
   end_date: '2026-11-30',
@@ -44,7 +45,7 @@ const bali = trip({
 
 // Active trip around "today" so Home's Today state shows in preview (today = day 3).
 const indo = trip({
-  destination: 'indonesia',
+  destination: 'Munnar',
   start_date: addDays(todayISO(), -2),
   end_date: addDays(todayISO(), 4),
   status: 'active',
@@ -54,8 +55,8 @@ const db = {
   trips: [
     bali,
     indo,
-    trip({ destination: 'bali', start_date: '2026-05-01', end_date: '2026-05-04', status: 'ready' }),
-    trip({ destination: 'Lisbon', start_date: '2026-03-02', end_date: '2026-03-08', status: 'completed' }),
+    trip({ destination: 'goa', start_date: '2026-05-01', end_date: '2026-05-04', status: 'ready' }),
+    trip({ destination: 'Hampi', start_date: '2026-03-02', end_date: '2026-03-08', status: 'completed' }),
   ] as Trip[],
   entries: [] as ItineraryEntry[],
   assignments: [] as OutfitAssignment[],
@@ -94,13 +95,13 @@ db.links.set(db.outfits[1].id, [db.items[0].id, db.items[1].id]);
 db.links.set(db.outfits[2].id, [db.items[4].id, db.items[5].id]);
 
 // Active "indonesia" trip: today is day 3, with an outdoor entry and a pending weather nudge.
-const rice = entry(indo.id, 3, '15:00:00', 'Tegallalang rice terrace walk', true);
+const rice = entry(indo.id, 3, '15:00:00', 'Tea plantation walk', true);
 db.entries.push(
-  entry(indo.id, 3, '09:00:00', 'Breakfast at a local warung', false),
+  entry(indo.id, 3, '09:00:00', 'Breakfast at the guesthouse', false),
   rice,
-  entry(indo.id, 3, '19:00:00', 'Dinner in Seminyak', false),
-  entry(indo.id, 4, '10:00:00', 'Tirta Empul water temple', true),
-  entry(indo.id, 4, '14:00:00', 'Ubud market', true),
+  entry(indo.id, 3, '19:00:00', 'Dinner at a Kerala restaurant', false),
+  entry(indo.id, 4, '10:00:00', 'Eravikulam National Park', true),
+  entry(indo.id, 4, '14:00:00', 'Munnar spice market', true),
 );
 db.assignments.push(
   { id: uid(), trip_id: indo.id, day_number: 3, saved_outfit_id: db.outfits[1].id },
@@ -112,61 +113,18 @@ const nudges: Nudge[] = [
     id: uid(),
     trip_id: indo.id,
     itinerary_entry_id: rice.id,
-    reason: 'Rain is expected from 2pm. Your 3pm rice terrace walk is outdoors, so swap it for a museum visit and bring a light layer.',
-    suggested_title: 'Ubud art museum',
-    suggested_outfit_note: 'Light layer added',
+    reason: 'Rain is expected from 2pm. Your 3pm tea plantation walk is outdoors, so swap it for the tea museum and bring a light waterproof layer.',
+    suggested_title: 'Tea museum visit',
+    suggested_outfit_note: 'Light rain jacket added',
     status: 'pending',
     created_at: new Date().toISOString(),
-    trips: { destination: 'indonesia' },
+    trips: { destination: 'Munnar' },
   },
 ];
 
-const dest = (
-  name: string,
-  country: string,
-  region: string,
-  color: string,
-  short: string,
-  best: string,
-  tags: string[],
-  highlights: string[],
-  full?: string,
-): Destination => ({
-  id: uid(),
-  name,
-  country,
-  region,
-  image_url: swatch(name, color),
-  short_description: short,
-  full_description: full ?? `${short} A great pick for ${tags.join(' and ').toLowerCase()} travellers.`,
-  best_time_to_visit: best,
-  tags,
-  highlights,
-});
-
-const destinations: Destination[] = [
-  dest('Bali', 'Indonesia', 'Bali', '#BFD8B8', 'Temples, surf breaks, and rice terraces.', 'Apr – Oct (dry season)', ['Adventurous', 'Chill'],
-    ['Tegalalang Rice Terraces', 'Uluwatu Temple at sunset', 'Mount Batur sunrise hike', 'Ubud monkey forest', 'Seminyak beach clubs'],
-    'Bali is Indonesia’s most beloved island, where volcanic mountains meet palm-fringed beaches. Spend your mornings hiking emerald rice terraces, your afternoons at ancient water temples, and your evenings watching the sun drop into the Indian Ocean from a cliff-top shrine.'),
-  dest('Lisbon', 'Portugal', 'Lisbon', '#F0D9A8', 'Hills, tilework, and golden light.', 'Mar – May, Sep – Oct', ['Chill', 'Family'],
-    ['Alfama’s winding streets', 'Tram 28', 'Belém pastries', 'Sunset at Miradouro da Senhora do Monte']),
-  dest('Kyoto', 'Japan', 'Kansai', '#C9D3C3', 'Shrines, tea houses, and bamboo groves.', 'Mar – Apr, Oct – Nov', ['Pilgrimage', 'Chill'],
-    ['Fushimi Inari gates', 'Arashiyama bamboo grove', 'Kinkaku-ji', 'A tea ceremony in Gion']),
-  dest('Marrakech', 'Morocco', 'Marrakech-Safi', '#E3B79A', 'Souks, riads, and desert gates.', 'Mar – May, Sep – Nov', ['Adventurous', 'Family'],
-    ['Jemaa el-Fnaa at dusk', 'Majorelle Garden', 'Souk bargaining', 'A night in the Agafay desert']),
-  dest('Reykjavik', 'Iceland', 'Capital Region', '#B5C9DB', 'Glaciers, geysers, and hot springs.', 'Jun – Aug, Sep – Mar for aurora', ['Adventurous'],
-    ['Golden Circle drive', 'Blue Lagoon', 'Northern lights chase', 'Hallgrímskirkja']),
-  dest('Tulum', 'Mexico', 'Quintana Roo', '#BFE0DA', 'Cenotes, ruins, and beach clubs.', 'Nov – Apr', ['Chill', 'Adventurous'],
-    ['Cenote swim', 'Tulum ruins at sunrise', 'Sian Ka’an biosphere', 'Beach yoga']),
-  dest('San José', 'Costa Rica', 'San José', '#A9C9A4', 'Cloud forests, volcanoes, and wildlife.', 'Dec – Apr', ['Adventurous', 'Family'],
-    ['Arenal volcano', 'Monteverde cloud forest', 'Manuel Antonio wildlife', 'Zip-lining']),
-];
-
-const events: EventItem[] = [
-  { id: uid(), name: 'Lantern Festival', location: 'Hoi An, Vietnam', event_date: addDays(todayISO(), 12), image_url: swatch('Lantern Festival', '#F2C9B8'), tags: ['Pilgrimage', 'Family'] },
-  { id: uid(), name: 'La Tomatina', location: 'Buñol, Spain', event_date: addDays(todayISO(), 25), image_url: swatch('La Tomatina', '#E8B4B0'), tags: ['Adventurous'] },
-  { id: uid(), name: 'Nyepi Day', location: 'Bali, Indonesia', event_date: addDays(todayISO(), 40), image_url: swatch('Nyepi Day', '#C9D6E3'), tags: ['Pilgrimage', 'Chill'] },
-];
+// Same content as the real seed (supabase/india-content.json), so preview matches what Home will show.
+const destinations: Destination[] = indiaContent.destinations.map((d) => ({ id: uid(), ...d }));
+const events: EventItem[] = indiaContent.events.map((e) => ({ id: uid(), ...e }));
 
 function entry(trip_id: string, day_number: number, entry_time: string, title: string, is_outdoor: boolean): ItineraryEntry {
   return { id: uid(), trip_id, day_number, entry_time, title, is_outdoor };
@@ -179,12 +137,12 @@ const SAMPLE: Array<[string, string, boolean]> = [
 ];
 
 db.entries.push(
-  entry(bali.id, 1, '09:00:00', 'Mount Batur Sunrise Hike', true),
-  entry(bali.id, 1, '13:00:00', 'Uluwatu Temple', true),
-  entry(bali.id, 1, '19:00:00', 'Ubud Cooking Class', false),
-  entry(bali.id, 3, '09:00:00', 'Sunset Viewpoint', true),
-  entry(bali.id, 3, '13:00:00', 'City Museum', false),
-  entry(bali.id, 3, '19:00:00', 'City Walking Tour', true),
+  entry(bali.id, 1, '09:00:00', 'Amber Fort', true),
+  entry(bali.id, 1, '13:00:00', 'City Palace and Jantar Mantar', false),
+  entry(bali.id, 1, '19:00:00', 'Rajasthani thali dinner', false),
+  entry(bali.id, 3, '09:00:00', 'Lake Pichola boat ride', true),
+  entry(bali.id, 3, '13:00:00', 'City Palace museum', false),
+  entry(bali.id, 3, '19:00:00', 'Old city walking tour', true),
 );
 
 const find = (id: string) => {

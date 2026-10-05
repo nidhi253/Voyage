@@ -106,6 +106,9 @@ export interface Destination {
   best_time_to_visit: string | null;
   tags: string[];
   highlights: string[];
+  /** Photographer and licence, for the openly licensed photo shown. */
+  image_credit?: string | null;
+  image_source_url?: string | null;
 }
 
 export interface EventItem {
@@ -115,6 +118,8 @@ export interface EventItem {
   event_date: string;
   image_url: string | null;
   tags: string[];
+  image_credit?: string | null;
+  image_source_url?: string | null;
 }
 
 export type NudgeStatus = 'pending' | 'accepted' | 'dismissed';
