@@ -1,5 +1,22 @@
 export type TripStatus = 'planning' | 'ready' | 'active' | 'completed';
 
+/** Answers from the "tell us what you like" step; the AI itinerary uses them later. */
+export interface TripPreferences {
+  travellers: string | null;
+  pace: string | null;
+  interests: string[];
+  must_do: string | null;
+}
+
+export const TRAVELLER_OPTIONS = ['Solo', 'Couple', 'Friends', 'Family'];
+export const PACE_OPTIONS = [
+  { key: 'Relaxed', hint: '1–2 plans a day, plenty of downtime' },
+  { key: 'Balanced', hint: '2–3 plans a day' },
+  { key: 'Packed', hint: '4 or more plans a day' },
+];
+export const INTEREST_OPTIONS = ['Food', 'Nature', 'History & culture', 'Adventure', 'Spiritual', 'Shopping', 'Nightlife', 'Photography', 'Relaxing'];
+export const MAX_MUST_DO = 300;
+
 export interface Trip {
   id: string;
   user_id: string;
@@ -12,6 +29,7 @@ export interface Trip {
   tags: string[];
   status: TripStatus;
   regenerate_count: number;
+  preferences?: TripPreferences | null;
   created_at: string;
 }
 
@@ -23,6 +41,7 @@ export interface NewTripInput {
   end_date: string;
   budget: number | null;
   tags: string[];
+  preferences: TripPreferences | null;
 }
 
 export interface ItineraryEntry {

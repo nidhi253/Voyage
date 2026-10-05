@@ -38,7 +38,12 @@ export async function createTrip(input: NewTripInput): Promise<Trip> {
     .insert({ ...input, user_id: auth.user.id })
     .select()
     .single();
-  if (error) throw error;
+  if (error) {
+    if (error.code === 'PGRST204' || error.code === '42703' || /preferences/i.test(error.message)) {
+      throw new Error('Trip preferences need a one-time database update — run supabase/trip_preferences.sql in the Supabase SQL editor.');
+    }
+    throw error;
+  }
   return data as Trip;
 }
 

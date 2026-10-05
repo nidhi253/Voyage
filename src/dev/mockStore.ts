@@ -134,6 +134,7 @@ const SAMPLE: Array<[string, string, boolean]> = [
   ['09:00', 'Sunrise viewpoint hike', true],
   ['13:00', 'Local museum', false],
   ['19:00', 'Cooking class', false],
+  ['21:00', 'Night market stroll', true],
 ];
 
 db.entries.push(
@@ -218,8 +219,10 @@ export const mock = {
     const start = new Date(`${t.start_date}T00:00:00`).getTime();
     const end = new Date(`${t.end_date}T00:00:00`).getTime();
     const days = Math.round((end - start) / 86_400_000) + 1;
+    // Pace from the preferences step: Relaxed 2 plans a day, Balanced 3, Packed 4.
+    const perDay = t.preferences?.pace === 'Relaxed' ? 2 : t.preferences?.pace === 'Packed' ? 4 : 3;
     for (let d = 1; d <= days; d++) {
-      for (const [time, title, outdoor] of SAMPLE) {
+      for (const [time, title, outdoor] of SAMPLE.slice(0, perDay)) {
         db.entries.push(entry(tripId, d, `${time}:00`, `${title} (sample)`, outdoor));
       }
     }
