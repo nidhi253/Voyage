@@ -152,6 +152,21 @@ const find = (id: string) => {
   return t;
 };
 
+/** Fake "AI" outfit matching: outdoor days get a daytime outfit, indoor-only days an evening one. Only fills empty days. */
+function fillOutfits(tripId: string, days: number): number {
+  let filled = 0;
+  for (let d = 1; d <= days; d++) {
+    if (db.assignments.some((a) => a.trip_id === tripId && a.day_number === d)) continue;
+    const outdoor = db.entries.some((e) => e.trip_id === tripId && e.day_number === d && e.is_outdoor);
+    const wanted = outdoor ? ['Beach', 'Temple', 'Casual', 'Daytime'] : ['Dinner', 'Evening'];
+    const match = db.outfits.find((o) => o.occasions.some((x) => wanted.includes(x))) ?? db.outfits[(d - 1) % db.outfits.length];
+    if (!match) continue;
+    db.assignments.push({ id: uid(), trip_id: tripId, day_number: d, saved_outfit_id: match.id });
+    filled++;
+  }
+  return filled;
+}
+
 export const mock = {
   async listTrips() {
     await delay();
@@ -214,19 +229,45 @@ export const mock = {
   async generateItinerary(tripId: string, regenerate: boolean) {
     await delay(1500);
     const t = find(tripId);
-    if (regenerate) t.regenerate_count += 1;
+    if (regenerate && db.entries.some((e) => e.trip_id === tripId)) t.regenerate_count += 1;
     db.entries = db.entries.filter((e) => e.trip_id !== tripId);
     const start = new Date(`${t.start_date}T00:00:00`).getTime();
     const end = new Date(`${t.end_date}T00:00:00`).getTime();
     const days = Math.round((end - start) / 86_400_000) + 1;
     // Pace from the preferences step: Relaxed 2 plans a day, Balanced 3, Packed 4.
     const perDay = t.preferences?.pace === 'Relaxed' ? 2 : t.preferences?.pace === 'Packed' ? 4 : 3;
+    // Plans are spread evenly between the traveller's day start and end (the last one ends by the day end).
+    const toMin = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+    const dayStart = toMin(t.preferences?.day_start ?? '09:00');
+    const dayEnd = toMin(t.preferences?.day_end ?? '21:00');
+    const slot = (i: number) => {
+      const span = Math.max(0, dayEnd - 60 - dayStart);
+      const m = Math.round((dayStart + (span * i) / (perDay - 1)) / 15) * 15;
+      return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}:00`;
+    };
+    let created = 0;
     for (let d = 1; d <= days; d++) {
-      for (const [time, title, outdoor] of SAMPLE.slice(0, perDay)) {
-        db.entries.push(entry(tripId, d, `${time}:00`, `${title} (sample)`, outdoor));
+      for (let i = 0; i < perDay; i++) {
+        const [, title, outdoor] = SAMPLE[i % SAMPLE.length];
+        db.entries.push(entry(tripId, d, slot(i), `${title} (sample)`, outdoor));
+        created++;
       }
     }
+    return { entriesCreated: created, outfitsAssigned: fillOutfits(tripId, days) };
   },
+  async suggestOutfitsForTrip(tripId: string) {
+    await delay(1200);
+    const t = find(tripId);
+    if (!db.entries.some((e) => e.trip_id === tripId)) throw new Error('Build your itinerary first, then we can suggest outfits.');
+    if (db.outfits.length === 0) throw new Error('Create some outfits in Wardrobe first, then we can match them to your days.');
+    if ((t.outfit_suggest_count ?? 0) >= 5) throw new Error('You’ve used all 5 outfit suggestions for this trip.');
+    const days = Math.round((new Date(`${t.end_date}T00:00:00`).getTime() - new Date(`${t.start_date}T00:00:00`).getTime()) / 86_400_000) + 1;
+    const before = db.assignments.filter((a) => a.trip_id === tripId).length;
+    const assigned = fillOutfits(tripId, days);
+    t.outfit_suggest_count = (t.outfit_suggest_count ?? 0) + 1;
+    return { assigned, kept: before };
+  },
+
   async listItems() {
     await delay(200);
     return [...db.items];

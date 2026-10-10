@@ -7,6 +7,8 @@ import { createTrip, generateItinerary } from '../data/trips';
 import { getMyProfile } from '../data/profile';
 import { dayCount, isValidISODate } from '../lib/dates';
 import {
+  DEFAULT_DAY_END,
+  DEFAULT_DAY_START,
   INTEREST_OPTIONS,
   MAX_MUST_DO,
   PACE_OPTIONS,
@@ -38,6 +40,9 @@ export default function NewTripPage() {
   const [pace, setPace] = useState<string | null>('Balanced');
   const [interests, setInterests] = useState<string[]>([]);
   const [mustDo, setMustDo] = useState('');
+  const [dayStart, setDayStart] = useState(DEFAULT_DAY_START);
+  const [dayEnd, setDayEnd] = useState(DEFAULT_DAY_END);
+  const hoursOk = dayStart !== '' && dayEnd !== '' && dayStart < dayEnd;
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +76,7 @@ export default function NewTripPage() {
   }
 
   async function handleSubmit(skipPreferences = false) {
-    if (!detailsOk || submitting) return;
+    if (!detailsOk || submitting || (!skipPreferences && !hoursOk)) return;
     setSubmitting(true);
     setError(null);
 
@@ -82,6 +87,8 @@ export default function NewTripPage() {
           pace,
           interests,
           must_do: mustDo.trim() || null,
+          day_start: dayStart,
+          day_end: dayEnd,
         };
 
     let tripId: string;
@@ -116,8 +123,11 @@ export default function NewTripPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-5 text-center">
         <Spinner />
-        <p className="body-font text-sm" style={{ color: c.slate }}>
-          Building your trip…
+        <p className="body-font text-sm" style={{ color: c.ink }}>
+          Researching {destination.trim() || 'your destination'} and building your plan…
+        </p>
+        <p className="body-font text-xs mt-1" style={{ color: c.slate }}>
+          This can take up to a minute. Please keep this page open.
         </p>
       </div>
     );
@@ -270,6 +280,21 @@ export default function NewTripPage() {
               </div>
             </div>
 
+            <div>
+              <p className="body-font text-sm font-semibold mb-2" style={{ color: c.ink }}>
+                What does your day look like?
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Start my day at" type="time" value={dayStart} onChange={(e) => setDayStart(e.target.value)} error={!hoursOk} />
+                <Field label="Wrap up by" type="time" value={dayEnd} onChange={(e) => setDayEnd(e.target.value)} error={!hoursOk} />
+              </div>
+              <p className="body-font text-xs mt-2" style={{ color: hoursOk ? c.slate : c.red }}>
+                {hoursOk
+                  ? 'Plans are kept inside these hours, and outfits are picked to suit the day.'
+                  : 'The end time needs to be later than the start time.'}
+              </p>
+            </div>
+
             <Question title="What do you enjoy?" hint="pick any">
               {INTEREST_OPTIONS.map((o) => (
                 <Chip key={o} label={o} selected={interests.includes(o)} onClick={() => toggleInterest(o)} />
@@ -301,7 +326,9 @@ export default function NewTripPage() {
           </div>
 
           <div className="sticky bottom-0 px-5 py-4" style={{ background: c.surface, borderTop: `1px solid ${c.hairline}` }}>
-            <Button onClick={() => handleSubmit(false)}>Generate my itinerary</Button>
+            <Button disabled={!hoursOk} onClick={() => handleSubmit(false)}>
+              Generate my itinerary
+            </Button>
             <button
               onClick={() => handleSubmit(true)}
               className="body-font text-sm w-full text-center mt-3"

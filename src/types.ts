@@ -6,7 +6,13 @@ export interface TripPreferences {
   pace: string | null;
   interests: string[];
   must_do: string | null;
+  /** When the day's plans may start and must end (HH:MM, 24-hour). */
+  day_start: string;
+  day_end: string;
 }
+
+export const DEFAULT_DAY_START = '09:00';
+export const DEFAULT_DAY_END = '21:00';
 
 export const TRAVELLER_OPTIONS = ['Solo', 'Couple', 'Friends', 'Family'];
 export const PACE_OPTIONS = [
@@ -29,6 +35,7 @@ export interface Trip {
   tags: string[];
   status: TripStatus;
   regenerate_count: number;
+  outfit_suggest_count?: number;
   preferences?: TripPreferences | null;
   created_at: string;
 }

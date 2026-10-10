@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, ChevronDown, FileText, Plus, RefreshCw, Shirt, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, FileText, Plus, RefreshCw, Shirt, Sparkles, Trash2 } from 'lucide-react';
 import { Dialog } from '@mui/material';
 import { colors as c } from '../theme';
 import {
@@ -15,6 +15,7 @@ import {
   listSavedOutfits,
   listTrips,
   setTripStatus,
+  suggestOutfitsForTrip,
   updateEntry,
 } from '../data/trips';
 import { dayCount, formatRange, titleCase, todayISO } from '../lib/dates';
@@ -49,6 +50,7 @@ export default function TripDetailPage() {
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [readyErrors, setReadyErrors] = useState<string[]>([]);
+  const [working, setWorking] = useState<string | null>(null);
   const thumbs = useOutfitThumbs();
 
   const load = useCallback(async () => {
@@ -103,18 +105,52 @@ export default function TripDetailPage() {
   async function handleConfirmPending() {
     if (!pending) return;
     const p = pending;
+    if (p.kind === 'regenerate') return rebuildPlan();
     await run(async () => {
       if (p.kind === 'delete') await deleteEntry(p.entry.id);
       if (p.kind === 'save-edit') await updateEntry(p.entry.id, p.input);
-      if (p.kind === 'regenerate') {
-        try {
-          await generateItinerary(id, true);
-        } catch (err) {
-          setNotice(err instanceof Error ? err.message : 'Regeneration failed.');
-        }
-      }
     });
     setPending(null);
+  }
+
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+  /** Rebuilds the plan with the AI planner. Takes up to a minute, so the screen says what's happening. */
+  async function rebuildPlan() {
+    setPending(null);
+    setWorking(`Researching ${titleCase(trip?.destination ?? 'your trip')} and rebuilding your plan… this can take up to a minute.`);
+    setNotice(null);
+    await run(async () => {
+      try {
+        const r = await generateItinerary(id, true);
+        setNotice(
+          `Done: ${plural(r.entriesCreated, 'plan')} added` +
+            (r.outfitsAssigned ? `, and ${plural(r.outfitsAssigned, 'outfit')} picked for days that had none.` : '.'),
+        );
+      } catch (err) {
+        setNotice(err instanceof Error ? err.message : 'Regeneration failed.');
+      }
+    });
+    setWorking(null);
+  }
+
+  /** Matches saved outfits to days with no outfit yet. Never changes outfits you already chose. */
+  async function suggestOutfits() {
+    setWorking('Matching your outfits to each day…');
+    setNotice(null);
+    await run(async () => {
+      try {
+        const r = await suggestOutfitsForTrip(id);
+        setNotice(
+          r.assigned > 0
+            ? `Picked ${plural(r.assigned, 'outfit')} for days that had none.${r.kept ? ' Days you’d already chosen were left alone.' : ''}`
+            : 'Every day already has an outfit, so nothing changed.',
+        );
+      } catch (err) {
+        setNotice(err instanceof Error ? err.message : 'Couldn’t suggest outfits.');
+      }
+    });
+    setWorking(null);
   }
 
   function handleEntrySubmit(input: EntryInput, existing?: ItineraryEntry) {
@@ -204,6 +240,13 @@ export default function TripDetailPage() {
       </header>
 
       <div className="px-5 pt-5">
+        {working && (
+          <div className="no-print rounded-xl px-4 py-3 mb-4 flex items-center gap-3 body-font text-sm" style={{ background: c.deepSkyWash, color: c.deepSky }} role="status">
+            <span className="inline-block w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin shrink-0" />
+            {working}
+          </div>
+        )}
+
         {notice && (
           <div className="no-print rounded-xl px-4 py-3 mb-4 body-font text-xs" style={{ background: c.surface, border: `1px solid ${c.hairline}`, color: c.slate }}>
             {notice}
@@ -273,16 +316,14 @@ export default function TripDetailPage() {
         </div>
 
         <div className="no-print flex flex-col gap-3 mt-6">
+          <Button variant="outline" disabled={busy} onClick={suggestOutfits}>
+            <Sparkles size={15} /> Suggest outfits for empty days
+            {typeof trip.outfit_suggest_count === 'number' ? ` (${Math.max(0, 5 - trip.outfit_suggest_count)} left)` : ''}
+          </Button>
           <Button
             variant="outline"
             disabled={capReached || busy}
-            onClick={() => (entries.length ? setPending({ kind: 'regenerate' }) : run(async () => {
-              try {
-                await generateItinerary(id, true);
-              } catch (err) {
-                setNotice(err instanceof Error ? err.message : 'Regeneration failed.');
-              }
-            }))}
+            onClick={() => (entries.length ? setPending({ kind: 'regenerate' }) : rebuildPlan())}
           >
             <RefreshCw size={15} /> Regenerate
             {capReached ? ' (limit reached)' : ` (${REGENERATE_CAP - trip.regenerate_count} left)`}

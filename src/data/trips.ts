@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { PREVIEW, loadMock } from '../dev/preview';
 import type {
@@ -117,20 +118,41 @@ export async function listSavedOutfits(): Promise<SavedOutfit[]> {
   return (data as SavedOutfit[]).map((o) => ({ ...o, occasions: o.occasions ?? [] }));
 }
 
-/**
- * Calls the generate-itinerary Edge Function. The function is built in the AI step,
- * so until it's deployed this throws a readable error instead of crashing the screen.
- */
-export async function generateItinerary(tripId: string, regenerate: boolean): Promise<void> {
-  if (PREVIEW) return (await loadMock()).generateItinerary(tripId, regenerate);
-  const { error } = await supabase.functions.invoke('generate-itinerary', {
-    body: { trip_id: tripId, regenerate },
-  });
-  if (error) {
+const NOT_SWITCHED_ON = 'Itinerary generation isn’t switched on yet — add entries by hand for now.';
+
+export interface GenerationResult {
+  entriesCreated: number;
+  outfitsAssigned: number;
+}
+
+/** Calls the generate-itinerary Edge Function and turns its failures into short messages for the screen. */
+async function callPlanner(body: Record<string, unknown>): Promise<Record<string, number>> {
+  const { data, error } = await supabase.functions.invoke('generate-itinerary', { body });
+  if (!error) return (data ?? {}) as Record<string, number>;
+
+  if (error instanceof FunctionsHttpError) {
+    if (error.context.status === 404) throw new Error(NOT_SWITCHED_ON); // function not deployed
+    const payload = await error.context.json().catch(() => null);
     throw new Error(
-      'Itinerary generation isn’t switched on yet — add entries by hand for now.',
+      typeof payload?.error === 'string' ? payload.error : 'Something went wrong while planning. Please try again.',
     );
   }
+  // Network failures, or a function that isn't deployed (the browser reports that as a blocked request).
+  throw new Error(NOT_SWITCHED_ON);
+}
+
+/** Builds the day-by-day plan (and picks outfits from the wardrobe). Takes up to a minute. */
+export async function generateItinerary(tripId: string, regenerate: boolean): Promise<GenerationResult> {
+  if (PREVIEW) return (await loadMock()).generateItinerary(tripId, regenerate);
+  const r = await callPlanner({ trip_id: tripId, regenerate, mode: 'itinerary' });
+  return { entriesCreated: r.entries_created ?? 0, outfitsAssigned: r.outfits_assigned ?? 0 };
+}
+
+/** Matches saved outfits to the days that don't have one yet, without touching the itinerary. */
+export async function suggestOutfitsForTrip(tripId: string): Promise<{ assigned: number; kept: number }> {
+  if (PREVIEW) return (await loadMock()).suggestOutfitsForTrip(tripId);
+  const r = await callPlanner({ trip_id: tripId, mode: 'outfits' });
+  return { assigned: r.outfits_assigned ?? 0, kept: r.outfits_kept ?? 0 };
 }
 
 /** "Add to trip" from a destination page: makes it the trip's second city. */
