@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "guidelines": "node scripts/build-guidelines.mjs",
+    "test:planner": "node supabase/functions/generate-itinerary/lib.test.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",

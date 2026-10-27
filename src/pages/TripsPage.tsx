@@ -3,9 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, Plus } from 'lucide-react';
 import { colors as c } from '../theme';
 import { deleteTrip, listTrips } from '../data/trips';
+import { listDestinations } from '../data/home';
+import { effectiveStatus } from '../lib/tripStatus';
 import { formatRange, titleCase } from '../lib/dates';
-import type { Trip, TripStatus } from '../types';
+import type { Destination, Trip, TripStatus } from '../types';
 import { Badge, Button, ConfirmModal, ErrorText, Spinner } from '../components/ui';
+import DestImage from '../components/DestImage';
 
 const STATUS_LABEL: Record<TripStatus, string> = {
   planning: 'Planning',
@@ -20,6 +23,7 @@ export default function TripsPage() {
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Trip | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [covers, setCovers] = useState<Map<string, Destination>>(new Map());
 
   const load = useCallback(async () => {
     try {
@@ -34,6 +38,13 @@ export default function TripsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Cover photos come from the matching destination (by name); trips to unlisted places get a soft placeholder.
+  useEffect(() => {
+    listDestinations()
+      .then((all) => setCovers(new Map(all.map((d) => [d.name.toLowerCase(), d]))))
+      .catch(() => {});
+  }, []);
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -95,12 +106,17 @@ export default function TripsPage() {
               style={{
                 background: c.surface,
                 border: `1px solid ${c.hairline}`,
-                opacity: t.status === 'completed' ? 0.55 : 1,
+                opacity: effectiveStatus(t) === 'completed' ? 0.55 : 1,
               }}
             >
               <Link to={`/trips/${t.id}`} className="block no-underline">
-                <div className="flex justify-between items-start gap-3">
-                  <div className="min-w-0">
+                <div className="flex items-start gap-3">
+                  <DestImage
+                    url={covers.get(t.destination.trim().toLowerCase())?.image_url}
+                    name={titleCase(t.destination)}
+                    className="w-14 h-14 rounded-xl shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
                     <p className="display text-lg truncate" style={{ color: c.ink }}>
                       {titleCase(t.destination)}
                     </p>
@@ -114,7 +130,7 @@ export default function TripsPage() {
                       {formatRange(t.start_date, t.end_date)}
                     </p>
                   </div>
-                  <Badge tone={t.status === 'active' ? 'active' : 'neutral'}>{STATUS_LABEL[t.status]}</Badge>
+                  <Badge tone={effectiveStatus(t) === 'active' ? 'active' : 'neutral'}>{STATUS_LABEL[effectiveStatus(t)]}</Badge>
                 </div>
               </Link>
               <button

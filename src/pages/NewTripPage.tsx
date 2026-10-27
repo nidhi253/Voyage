@@ -5,6 +5,7 @@ import { Switch } from '@mui/material';
 import { colors as c } from '../theme';
 import { createTrip, generateItinerary } from '../data/trips';
 import { getMyProfile } from '../data/profile';
+import { listDestinations } from '../data/home';
 import { dayCount, isValidISODate } from '../lib/dates';
 import {
   DEFAULT_DAY_END,
@@ -34,6 +35,7 @@ export default function NewTripPage() {
   const [budget, setBudget] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagOptions, setTagOptions] = useState<string[]>(PERSONA_TAGS);
+  const [placeNames, setPlaceNames] = useState<string[]>([]);
 
   // Step 2: what the traveller likes. Balanced is the default pace; everything else is optional.
   const [travellers, setTravellers] = useState<string | null>(null);
@@ -55,6 +57,13 @@ export default function NewTripPage() {
         setTags(p.tags ?? []);
         setTagOptions(Array.from(new Set([...PERSONA_TAGS, ...(p.tags ?? [])])));
       })
+      .catch(() => {});
+  }, []);
+
+  // Suggestions for the destination boxes. Anything typed is still accepted: the planner can handle any place.
+  useEffect(() => {
+    listDestinations()
+      .then((all) => setPlaceNames(all.map((d) => d.name)))
       .catch(() => {});
   }, []);
 
@@ -155,12 +164,23 @@ export default function NewTripPage() {
       {step === 'details' ? (
         <>
           <div className="flex-1 px-5 py-5 flex flex-col gap-4">
-            <Field
-              label="Destination"
-              placeholder="e.g. Jaipur"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-            />
+            <datalist id="place-options">
+              {placeNames.map((n) => (
+                <option key={n} value={n} />
+              ))}
+            </datalist>
+            <div>
+              <Field
+                label="Destination"
+                placeholder="e.g. Jaipur"
+                list="place-options"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+              />
+              <p className="body-font text-[11px] mt-1" style={{ color: c.slate, opacity: 0.65 }}>
+                Focused on India for now
+              </p>
+            </div>
 
             <div className="flex items-center justify-between">
               <span className="body-font text-sm font-semibold" style={{ color: c.ink }}>
@@ -182,6 +202,7 @@ export default function NewTripPage() {
                 <Field
                   label="Second destination"
                   placeholder="e.g. Udaipur"
+                  list="place-options"
                   value={second}
                   onChange={(e) => setSecond(e.target.value)}
                 />

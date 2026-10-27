@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { CloudRain, Home, MapPin, Shirt, User } from 'lucide-react';
+import { Home, MapPin, Shirt, User } from 'lucide-react';
+import Logo from './Logo';
 import { colors as c } from '../theme';
 
 const tabs = [
@@ -25,12 +26,7 @@ export default function AppShell() {
         className="no-print hidden md:flex flex-col w-60 shrink-0 h-screen sticky top-0 px-4 py-6"
         style={{ background: c.surface, borderRight: `1px solid ${c.hairline}` }}
       >
-        <div className="flex items-center gap-2 px-3 mb-8">
-          <CloudRain size={22} color={c.deepSky} />
-          <span className="display text-xl" style={{ color: c.deepSky }}>
-            Voyage
-          </span>
-        </div>
+        <Logo size={32} className="px-3 mb-8" />
         <nav className="flex flex-col gap-1">
           {tabs.map(({ to, label, Icon, end }) => (
             <NavLink

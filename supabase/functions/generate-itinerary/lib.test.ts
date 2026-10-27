@@ -9,6 +9,8 @@ import {
   dayCount,
   dayWindow,
   extractJson,
+  guidelineBlock,
+  MAX_GUIDELINES_CHARS,
   modelSettings,
   validateEntries,
   validateOutfitPicks,
@@ -70,6 +72,19 @@ const op = buildOutfitPrompt(trip, entries, outfits, '2026-10-06');
 assert.match(op.user, /Day 1 \(2026-11-10, Jaipur\): 09:00 Amber Fort \(outdoor\)/);
 assert.match(op.user, /Day 3 \(2026-11-12, Udaipur\): no plans yet/);
 assert.match(op.system, /Never invent an id/);
+
+// ---- house guidelines (from ai/guidelines.md)
+assert.equal(guidelineBlock(''), '');
+assert.equal(guidelineBlock(undefined), '');
+assert.equal(guidelineBlock('   \n  '), '');
+const gp = buildPrompt(trip, '2026-10-06', [], '- Prefer local food stops.');
+assert.match(gp.system, /House guidelines from the product owner/);
+assert.match(gp.system, /- Prefer local food stops\./);
+assert.match(gp.system, /never override the daily hours, the reply format/);
+assert.ok(gp.system.indexOf('House guidelines') < gp.system.indexOf('Reply with one JSON object'));  // rules and format come last
+assert.ok(!buildPrompt(trip, '2026-10-06').system.includes('House guidelines'));                      // none supplied, none shown
+assert.ok(guidelineBlock('x'.repeat(MAX_GUIDELINES_CHARS * 3)).length < MAX_GUIDELINES_CHARS + 400);   // long files are capped
+assert.match(buildOutfitPrompt(trip, entries, outfits, '2026-10-06', '- Modest clothes at temples.').system, /Modest clothes at temples/);
 
 // ---- model-specific settings
 assert.deepEqual(modelSettings('claude-haiku-4-5'), { searchType: 'web_search_20250305', effort: false });

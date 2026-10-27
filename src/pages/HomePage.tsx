@@ -6,6 +6,7 @@ import { getMyProfile } from '../data/profile';
 import { listDestinations, listNudges, listUpcomingEvents, searchDestinations } from '../data/home';
 import { listAssignments, listEntries, listSavedOutfits, listTrips } from '../data/trips';
 import { addDays, dayCount, formatDay, titleCase, todayISO } from '../lib/dates';
+import { effectiveStatus } from '../lib/tripStatus';
 import type { Destination, EventItem, ItineraryEntry, Nudge, OutfitAssignment, SavedOutfit, Trip } from '../types';
 import { Badge, Button, ErrorText, SectionLabel, Spinner } from '../components/ui';
 import DestImage from '../components/DestImage';
@@ -64,13 +65,13 @@ export default function HomePage() {
       };
 
       // Today view: an active trip whose dates include today. Day-ahead: a trip starting tomorrow.
-      const activeTrip = trips.find((t) => t.status === 'active' && t.start_date <= today && today <= t.end_date);
+      const activeTrip = trips.find((t) => effectiveStatus(t, today) === 'active' && t.start_date <= today && today <= t.end_date);
       const startsTomorrow = trips.find((t) => (t.status === 'ready' || t.status === 'active') && t.start_date === tomorrow);
       const focus = activeTrip ?? startsTomorrow ?? null;
       setCurrent(focus ? await withPlan(focus) : null);
       setCurrentNudges(focus ? allNudges.filter((n) => n.trip_id === focus.id) : []);
 
-      setPlanning(await Promise.all(trips.filter((t) => t.status === 'planning').slice(0, 2).map(withPlan)));
+      setPlanning(await Promise.all(trips.filter((t) => effectiveStatus(t, today) === 'planning').slice(0, 2).map(withPlan)));
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Couldn’t load Home.');

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import { colors as c } from '../theme';
+import Logo from './Logo';
 
 type Mode = 'sign-in' | 'sign-up';
 
@@ -63,6 +64,7 @@ export default function Login() {
       style={{ background: c.bg }}
     >
       <div className="w-full max-w-[360px]">
+        <Logo size={40} className="mb-10" />
         <p className="display text-3xl mb-2 whitespace-pre-line" style={{ color: c.ink }}>
           {mode === 'sign-in' ? 'Welcome\nback' : 'Create your\naccount'}
         </p>

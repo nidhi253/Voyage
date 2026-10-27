@@ -5,6 +5,7 @@ import { Dialog } from '@mui/material';
 import { colors as c } from '../theme';
 import { listTrips, setSecondCity } from '../data/trips';
 import { dayCount, titleCase } from '../lib/dates';
+import { effectiveStatus } from '../lib/tripStatus';
 import type { Destination, Trip } from '../types';
 import { Button, ErrorText, Spinner } from './ui';
 
@@ -31,7 +32,7 @@ export default function AddToTripSheet({
     setStartDay('');
     setError(null);
     listTrips()
-      .then((t) => setTrips(t.filter((x) => x.status !== 'completed')))
+      .then((t) => setTrips(t.filter((x) => effectiveStatus(x) !== 'completed')))
       .catch(() => setTrips([]));
   }, [open]);
 

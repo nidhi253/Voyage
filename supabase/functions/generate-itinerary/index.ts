@@ -8,6 +8,7 @@
 // SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY are provided to every function automatically.
 import Anthropic from 'npm:@anthropic-ai/sdk';
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
+import { GUIDELINES } from '../_shared/guidelines.ts';
 import {
   DEFAULT_MODEL,
   MAX_OUTFIT_SUGGESTIONS,
@@ -35,6 +36,9 @@ const CORS = {
 
 const json = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+
+/** The owner's house guidelines for the given features (from ai/guidelines.md), blank sections skipped. */
+const guidelinesFor = (...keys: string[]) => keys.map((k) => GUIDELINES[k]).filter(Boolean).join('\n');
 
 /** The traveller's saved outfits, with the types of piece in each (names only: no photos are sent anywhere). */
 async function loadOutfits(admin: SupabaseClient, userId: string): Promise<OutfitOption[]> {
@@ -154,7 +158,7 @@ Deno.serve(async (req) => {
         title: String(e.title),
         is_outdoor: e.is_outdoor === true,
       }));
-      const text = await callClaude(claude, model, buildOutfitPrompt(t, entries, outfits, today), { maxSearches: 2 });
+      const text = await callClaude(claude, model, buildOutfitPrompt(t, entries, outfits, today, guidelinesFor('general', 'outfits')), { maxSearches: 2 });
       const picks = validateOutfitPicks(extractJson(text), days, new Set(outfits.map((o) => o.id)));
       const saved = await saveOutfitPicks(admin, t.id, picks);
       await admin.from('trips').update({ outfit_suggest_count: (t.outfit_suggest_count ?? 0) + 1 }).eq('id', t.id);
@@ -171,7 +175,11 @@ Deno.serve(async (req) => {
     }
 
     const outfits = await loadOutfits(admin, userId);
-    const text = await callClaude(claude, model, buildPrompt(t, today, outfits));
+    const text = await callClaude(
+      claude,
+      model,
+      buildPrompt(t, today, outfits, guidelinesFor('general', 'itinerary', ...(outfits.length ? ['outfits'] : []))),
+    );
     const parsed = extractJson(text);
     const entries = validateEntries(parsed, days, dayWindow(t));
     const picks = validateOutfitPicks(parsed, days, new Set(outfits.map((o) => o.id)));
