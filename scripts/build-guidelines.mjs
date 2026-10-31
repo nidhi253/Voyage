@@ -15,6 +15,8 @@ const SECTIONS = {
   'Destination guides': 'destinations',
   'Describing a piece from its photo': 'describe',
   'Forecast-based outfit refresh': 'forecast',
+  'Shopping suggestions': 'shopping',
+  'Food and stays': 'food',
 };
 
 const lines = readFileSync('ai/guidelines.md', 'utf8').split(/\r?\n/);
