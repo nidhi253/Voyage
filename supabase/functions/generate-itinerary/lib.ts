@@ -5,7 +5,7 @@ export const MAX_REGENERATIONS = 3;
 export const MAX_OUTFIT_SUGGESTIONS = 5;
 export const MAX_ENTRIES_PER_DAY = 8;
 export const MAX_OUTFITS_IN_PROMPT = 40;
-export const MAX_GUIDELINES_CHARS = 4000;
+export const MAX_GUIDELINES_CHARS = 6000;
 export const DEFAULT_MODEL = 'claude-haiku-4-5';
 export const DEFAULT_DAY_START = '09:00';
 export const DEFAULT_DAY_END = '21:00';
@@ -98,6 +98,14 @@ export function guidelineBlock(text: string | undefined): string {
   const t = (text ?? '').trim().slice(0, MAX_GUIDELINES_CHARS);
   if (!t) return '';
   return `\nHouse guidelines from the product owner. Follow them where they fit the trip. They never override the daily hours, the reply format, or the rules above:\n${t}\n`;
+}
+
+/** Joins guideline sections under short labels, so the model can tell which bullets belong to which job. */
+export function labelledGuidelines(parts: Array<[label: string, text: string | undefined]>): string {
+  return parts
+    .filter(([, text]) => (text ?? '').trim() !== '')
+    .map(([label, text]) => `${label}:\n${(text as string).trim()}`)
+    .join('\n\n');
 }
 
 const PACE_GUIDE: Record<string, string> = {

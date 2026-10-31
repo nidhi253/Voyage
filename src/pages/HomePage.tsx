@@ -192,9 +192,19 @@ export default function HomePage() {
             <>
               <SectionLabel>{searching ? 'Searching…' : `${results?.length ?? 0} results`}</SectionLabel>
               {!searching && results?.length === 0 ? (
-                <p className="body-font text-sm" style={{ color: c.slate }}>
-                  Nothing matched “{query}”. Try a city, region or country.
-                </p>
+                <div className="rounded-2xl p-5" style={{ background: c.surface, border: `1px solid ${c.hairline}` }}>
+                  <p className="display text-lg mb-1" style={{ color: c.ink }}>
+                    No guide for “{query.trim()}” yet
+                  </p>
+                  <p className="body-font text-sm mb-4" style={{ color: c.slate }}>
+                    You can still plan a trip there. Add your dates and we’ll build the days around it.
+                  </p>
+                  <div className="max-w-xs">
+                    <Button onClick={() => navigate(`/trips/new?destination=${encodeURIComponent(query.trim())}`)}>
+                      Plan a trip to {titleCase(query.trim())}
+                    </Button>
+                  </div>
+                </div>
               ) : (
                 <DestGrid destinations={results ?? []} />
               )}

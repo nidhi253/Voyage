@@ -20,6 +20,7 @@ import {
   dayWindow,
   extractJson,
   isUuid,
+  labelledGuidelines,
   validateEntries,
   validateOutfitPicks,
   type ClaudeClient,
@@ -38,7 +39,13 @@ const json = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
 /** The owner's house guidelines for the given features (from ai/guidelines.md), blank sections skipped. */
-const guidelinesFor = (...keys: string[]) => keys.map((k) => GUIDELINES[k]).filter(Boolean).join('\n');
+const GUIDELINE_LABELS: Record<string, string> = {
+  general: 'For everything',
+  itinerary: 'When planning the itinerary',
+  outfits: 'When choosing outfits',
+};
+const guidelinesFor = (...keys: string[]) =>
+  labelledGuidelines(keys.map((k) => [GUIDELINE_LABELS[k] ?? k, GUIDELINES[k]] as [string, string | undefined]));
 
 /** The traveller's saved outfits, with the types of piece in each (names only: no photos are sent anywhere). */
 async function loadOutfits(admin: SupabaseClient, userId: string): Promise<OutfitOption[]> {

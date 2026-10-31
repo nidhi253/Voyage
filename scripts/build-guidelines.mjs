@@ -12,6 +12,9 @@ const SECTIONS = {
   'Spotting the type of a piece from its photo': 'categorise',
   'Outfit combinations from your wardrobe': 'combos',
   'Local picks when adding an entry': 'local',
+  'Destination guides': 'destinations',
+  'Describing a piece from its photo': 'describe',
+  'Forecast-based outfit refresh': 'forecast',
 };
 
 const lines = readFileSync('ai/guidelines.md', 'utf8').split(/\r?\n/);

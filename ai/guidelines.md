@@ -48,18 +48,58 @@
 
 ## Outfit suggestions for each day
 
-> What the AI already does: it picks one of the traveller's saved outfits for each day, based on that day's plans,
-> the city and the season. It only fills days that have no outfit yet, and never overwrites one you chose.
-> It can only choose from outfits that already exist.
+> **What the AI already does (built in; changing these needs a code change):** it picks one of the traveller's saved
+> outfits for each day, based on that day's plans, the city and the season. It only fills days that have no outfit yet,
+> and never overwrites one you chose. It can only choose from outfits that already exist, and it leaves a day blank
+> if nothing suits it.
+>
+> **What it can see:** for each saved outfit, its name, its occasions, and the types of piece in it (for example Tops,
+> Trousers, Shoes). It does NOT see the photos, so it can't judge colours or style. The better you name outfits and
+> tag their occasions, the better its picks will be.
+>
+> **What it knows about the day:** the plans and whether each is indoors or outdoors, the city, and the dates. When it
+> plans a whole trip it also knows who is travelling, their interests and their own wishes. In the outfits-only mode
+> (the "Suggest outfits for empty days" button) it works from the existing plans.
+>
+> **Limits:** up to 5 outfit suggestions per trip, and if you have more than 40 outfits only the newest 40 are shown to it.
 
 ### Guidance
 
-- Temple and sacred-site days: choose modest, covered clothing (shoulders and knees), and something easy to wear with shoes that come off.
-- Beach or water days: light, quick-drying outfits.
-- Hot, humid places such as Kerala, Goa and Mumbai: breathable fabrics. Cool mountain places such as Leh and Darjeeling: warm layers, especially mornings and evenings.
-- Long walking days: pick the most comfortable outfit.
-- Dinners and evening plans: a smarter outfit if there is one.
-- Avoid repeating the same outfit on back-to-back days unless nothing else fits.
+**Match the day's activities**
+
+- Temples, gurudwaras, mosques and dargahs: modest clothing that covers shoulders and knees, nothing sleeveless or very short, and easy to wear with shoes that come off. Gurudwaras and some dargahs also need the head covered, so prefer an outfit that works with a scarf or dupatta.
+- Forts, palaces and museums: a comfortable walking outfit. Forts mean steps and uneven stone, so prefer closed, grippy footwear over sandals when an outfit includes shoes.
+- Beach, boat and water days: light, quick-drying outfits. Avoid anything slow to dry.
+- Trekking, safaris, rafting and mountain passes: sturdy, layered and practical, with sun and cold protection. Nothing dressy.
+- Markets and street-food days: relaxed, breathable, easy to move in. Nothing precious.
+- Dinners, shows and rooftop evenings: a smarter outfit if there is one, otherwise the neatest casual outfit.
+- Long travel days (trains, drives, flights): the most comfortable, layered outfit, easy to rest in.
+
+**Match the place and the season**
+
+- Hot, humid places (Goa, Kerala, Mumbai, Chennai, Pondicherry): breathable cotton or linen. Avoid heavy fabrics.
+- Hot, dry places in summer (Rajasthan, Delhi, Agra): light, loose, light-coloured clothing in the day, with sun cover.
+- Cool or cold places (Leh, Ladakh, Darjeeling, Manali, Spiti): warm layers. Mornings and nights are far colder than midday, so prefer outfits that include outerwear.
+- Monsoon (roughly June to September across most of India): favour quick-drying outfits and practical footwear, especially for outdoor plans.
+- Winter evenings in North India are cold even when the days are mild, so prefer a layered outfit for evening plans.
+
+**Use what the traveller told us**
+
+- Occasions are the strongest hint. If an outfit is tagged Temple, Beach, Dinner, Hiking and so on, prefer it for a day that matches.
+- Outfit names often say a lot ("Beach day", "Evening out"). Use them when the occasions are empty.
+- Piece types help: an outfit with Outerwear suits cold days, an outfit with Shoes suits walking days, and a Dress suits easy warm days.
+- If the traveller's own wishes mention comfort, modesty or a particular style, honour them.
+
+**Variety across the trip**
+
+- Spread outfits across the trip. Avoid repeating the same outfit on back-to-back days unless nothing else fits.
+- If the wardrobe is small, repeating is fine. Repeat the most versatile outfit on low-key days.
+- Save the best outfit for the most special plan, such as a sunset dinner or a famous monument.
+
+**When unsure**
+
+- If nothing suits a day, leave it blank rather than pick something unsuitable. The traveller can choose.
+- Never pick an outfit that clearly clashes with the day, such as a beach outfit for a temple visit.
 
 ### Your notes
 

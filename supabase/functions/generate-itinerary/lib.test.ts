@@ -10,6 +10,7 @@ import {
   dayWindow,
   extractJson,
   guidelineBlock,
+  labelledGuidelines,
   MAX_GUIDELINES_CHARS,
   modelSettings,
   validateEntries,
@@ -72,6 +73,13 @@ const op = buildOutfitPrompt(trip, entries, outfits, '2026-10-06');
 assert.match(op.user, /Day 1 \(2026-11-10, Jaipur\): 09:00 Amber Fort \(outdoor\)/);
 assert.match(op.user, /Day 3 \(2026-11-12, Udaipur\): no plans yet/);
 assert.match(op.system, /Never invent an id/);
+
+// ---- labelled guideline sections
+assert.equal(
+  labelledGuidelines([['For everything', '- Be kind.'], ['When choosing outfits', '  - Be modest.  '], ['Empty', ''], ['Missing', undefined]]),
+  'For everything:\n- Be kind.\n\nWhen choosing outfits:\n- Be modest.',
+);
+assert.equal(labelledGuidelines([]), '');
 
 // ---- house guidelines (from ai/guidelines.md)
 assert.equal(guidelineBlock(''), '');
